@@ -19,7 +19,7 @@ PIP_PACKAGES=(
 )
 
 NODES=(
-    "ComfyUI-Manager"
+    
 )
 
 CHECKPOINT_MODELS=(
