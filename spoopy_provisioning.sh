@@ -1,12 +1,13 @@
 #!/bin/bash
-
 # This file will be sourced in init.sh
+# Namespace functions with provisioning_
 
-# https://raw.githubusercontent.com/ai-dock/comfyui/main/config/provisioning/default.sh
+# https://raw.githubusercontent.com/ai-dock/stable-diffusion-webui/main/config/provisioning/default.sh
 
-# Packages are installed after nodes so we can fix them...
+### Edit the following arrays to suit your workflow - values must be quoted and separated by newlines or spaces.
+### If you specify gated models you'll need to set environment variables HF_TOKEN and/orf CIVITAI_TOKEN
 
-#DEFAULT_WORKFLOW="https://..."
+DISK_GB_REQUIRED=30
 
 APT_PACKAGES=(
     #"package-1"
@@ -18,80 +19,60 @@ PIP_PACKAGES=(
     #"package-2"
 )
 
-NODES=(
-    
+EXTENSIONS=(
+    "https://github.com/Mikubill/sd-webui-controlnet"
+    "https://github.com/deforum-art/sd-webui-deforum"
+    "https://github.com/adieyal/sd-dynamic-prompts"
+    "https://github.com/ototadana/sd-face-editor"
+    "https://github.com/AlUlkesh/stable-diffusion-webui-images-browser"
+    "https://github.com/hako-mikan/sd-webui-regional-prompter"
+    "https://github.com/Coyote-A/ultimate-upscale-for-automatic1111"
+    "https://github.com/Gourieff/sd-webui-reactor"
+    "https://github.com/Bing-su/adetailer" 
 )
 
 CHECKPOINT_MODELS=(
-    #"https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt"
-    #"https://huggingface.co/stabilityai/stable-diffusion-2-1/resolve/main/v2-1_768-ema-pruned.ckpt"
-    #"https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors"
-    #"https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/sd_xl_refiner_1.0.safetensors"
-    "https://huggingface.co/lividtm/FillLUX_Spoopy/resolve/main/FillLUX_Spoopy.safetensors"
-)
-
-UNET_MODELS=(
-
+    #"https://civitai.com/api/download/models/700352?type=Model&format=SafeTensor&size=pruned&fp=fp16"
 )
 
 LORA_MODELS=(
     #"https://civitai.com/api/download/models/16576"
+    #"https://civitai.com/api/download/models/678946?type=Model&format=SafeTensor"
+    #"https://civitai.com/api/download/models/552951?type=Model&format=SafeTensor"
+    #"https://civitai.com/api/download/models/434656?type=Model&format=SafeTensor"
+    #"https://civitai.com/api/download/models/635768?type=Model&format=SafeTensor"
 )
 
 VAE_MODELS=(
-    #"https://huggingface.co/stabilityai/sd-vae-ft-ema-original/resolve/main/vae-ft-ema-560000-ema-pruned.safetensors"
-    #"https://huggingface.co/stabilityai/sd-vae-ft-mse-original/resolve/main/vae-ft-mse-840000-ema-pruned.safetensors"
-    #"https://huggingface.co/stabilityai/sdxl-vae/resolve/main/sdxl_vae.safetensors"
 )
 
 ESRGAN_MODELS=(
-    #"https://huggingface.co/ai-forever/Real-ESRGAN/resolve/main/RealESRGAN_x4.pth"
-    #"https://huggingface.co/FacehugmanIII/4x_foolhardy_Remacri/resolve/main/4x_foolhardy_Remacri.pth"
-    #"https://huggingface.co/Akumetsu971/SD_Anime_Futuristic_Armor/resolve/main/4x_NMKD-Siax_200k.pth"
 )
 
 CONTROLNET_MODELS=(
-    #"https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/diffusers_xl_canny_mid.safetensors"
-    #"https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/diffusers_xl_depth_mid.safetensors?download"
-    #"https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/t2i-adapter_diffusers_xl_openpose.safetensors"
-    #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/control_canny-fp16.safetensors"
-    #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/control_depth-fp16.safetensors"
-    #"https://huggingface.co/kohya-ss/ControlNet-diff-modules/resolve/main/diff_control_sd15_depth_fp16.safetensors"
-    #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/control_hed-fp16.safetensors"
-    #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/control_mlsd-fp16.safetensors"
-    #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/control_normal-fp16.safetensors"
-    #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/control_openpose-fp16.safetensors"
-    #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/control_scribble-fp16.safetensors"
-    #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/control_seg-fp16.safetensors"
-    #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/t2iadapter_canny-fp16.safetensors"
-    #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/t2iadapter_color-fp16.safetensors"
-    #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/t2iadapter_depth-fp16.safetensors"
-    #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/t2iadapter_keypose-fp16.safetensors"
-    #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/t2iadapter_openpose-fp16.safetensors"
-    #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/t2iadapter_seg-fp16.safetensors"
-    #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/t2iadapter_sketch-fp16.safetensors"
-    #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/t2iadapter_style-fp16.safetensors"
 )
+
 
 ### DO NOT EDIT BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING ###
 
 function provisioning_start() {
+    # We need to apply some workarounds to make old builds work with the new default
     if [[ ! -d /opt/environments/python ]]; then 
         export MAMBA_BASE=true
     fi
     source /opt/ai-dock/etc/environment.sh
-    source /opt/ai-dock/bin/venv-set.sh comfyui
+    source /opt/ai-dock/bin/venv-set.sh webui
 
+    DISK_GB_AVAILABLE=$(($(df --output=avail -m "${WORKSPACE}" | tail -n1) / 1000))
+    DISK_GB_USED=$(($(df --output=used -m "${WORKSPACE}" | tail -n1) / 1000))
+    DISK_GB_ALLOCATED=$(($DISK_GB_AVAILABLE + $DISK_GB_USED))
     provisioning_print_header
     provisioning_get_apt_packages
-    provisioning_get_nodes
     provisioning_get_pip_packages
+    provisioning_get_extensions
     provisioning_get_models \
         "${WORKSPACE}/storage/stable_diffusion/models/ckpt" \
         "${CHECKPOINT_MODELS[@]}"
-    provisioning_get_models \
-        "${WORKSPACE}/storage/stable_diffusion/models/unet" \
-        "${UNET_MODELS[@]}"
     provisioning_get_models \
         "${WORKSPACE}/storage/stable_diffusion/models/lora" \
         "${LORA_MODELS[@]}"
@@ -104,14 +85,33 @@ function provisioning_start() {
     provisioning_get_models \
         "${WORKSPACE}/storage/stable_diffusion/models/esrgan" \
         "${ESRGAN_MODELS[@]}"
+     
+    PLATFORM_ARGS=""
+    if [[ $XPU_TARGET = "CPU" ]]; then
+        PLATFORM_ARGS="--use-cpu all --skip-torch-cuda-test --no-half"
+    fi
+    PROVISIONING_ARGS="--skip-python-version-check --no-download-sd-model --do-not-download-clip --port 11404 --exit"
+    ARGS_COMBINED="${PLATFORM_ARGS} $(cat /etc/a1111_webui_flags.conf) ${PROVISIONING_ARGS}"
+    
+    # Start and exit because webui will probably require a restart
+    cd /opt/stable-diffusion-webui
+    if [[ -z $MAMBA_BASE ]]; then
+        source "$WEBUI_VENV/bin/activate"
+        LD_PRELOAD=libtcmalloc.so python launch.py \
+            ${ARGS_COMBINED}
+        deactivate
+    else 
+        micromamba run -n webui -e LD_PRELOAD=libtcmalloc.so python launch.py \
+            ${ARGS_COMBINED}
+    fi
     provisioning_print_end
 }
 
 function pip_install() {
     if [[ -z $MAMBA_BASE ]]; then
-            "$COMFYUI_VENV_PIP" install --no-cache-dir "$@"
+            "$WEBUI_VENV_PIP" install --no-cache-dir "$@"
         else
-            micromamba run -n comfyui pip install --no-cache-dir "$@"
+            micromamba run -n webui pip install --no-cache-dir "$@"
         fi
 }
 
@@ -127,45 +127,35 @@ function provisioning_get_pip_packages() {
     fi
 }
 
-function provisioning_get_nodes() {
-    for repo in "${NODES[@]}"; do
+function provisioning_get_extensions() {
+    for repo in "${EXTENSIONS[@]}"; do
         dir="${repo##*/}"
-        path="/opt/ComfyUI/custom_nodes/${dir}"
-        requirements="${path}/requirements.txt"
+        path="/opt/stable-diffusion-webui/extensions/${dir}"
         if [[ -d $path ]]; then
-            if [[ ${AUTO_UPDATE,,} != "false" ]]; then
-                printf "Updating node: %s...\n" "${repo}"
+            # Pull only if AUTO_UPDATE
+            if [[ ${AUTO_UPDATE,,} == "true" ]]; then
+                printf "Updating extension: %s...\n" "${repo}"
                 ( cd "$path" && git pull )
-                if [[ -e $requirements ]]; then
-                   pip_install -r "$requirements"
-                fi
             fi
         else
-            printf "Downloading node: %s...\n" "${repo}"
+            printf "Downloading extension: %s...\n" "${repo}"
             git clone "${repo}" "${path}" --recursive
-            if [[ -e $requirements ]]; then
-                pip_install -r "${requirements}"
-            fi
         fi
     done
 }
 
-function provisioning_get_default_workflow() {
-    if [[ -n $DEFAULT_WORKFLOW ]]; then
-        workflow_json=$(curl -s "$DEFAULT_WORKFLOW")
-        if [[ -n $workflow_json ]]; then
-            echo "export const defaultGraph = $workflow_json;" > /opt/ComfyUI/web/scripts/defaultGraph.js
-        fi
-    fi
-}
-
 function provisioning_get_models() {
     if [[ -z $2 ]]; then return 1; fi
-    
     dir="$1"
     mkdir -p "$dir"
     shift
-    arr=("$@")
+    if [[ $DISK_GB_ALLOCATED -ge $DISK_GB_REQUIRED ]]; then
+        arr=("$@")
+    else
+        printf "WARNING: Low disk space allocation - Only the first model will be downloaded!\n"
+        arr=("$1")
+    fi
+    
     printf "Downloading %s model(s) to %s...\n" "${#arr[@]}" "$dir"
     for url in "${arr[@]}"; do
         printf "Downloading: %s\n" "${url}"
@@ -185,37 +175,6 @@ function provisioning_print_end() {
     printf "\nProvisioning complete:  Web UI will start now\n\n"
 }
 
-function provisioning_has_valid_hf_token() {
-    [[ -n "$HF_TOKEN" ]] || return 1
-    url="https://huggingface.co/api/whoami-v2"
-
-    response=$(curl -o /dev/null -s -w "%{http_code}" -X GET "$url" \
-        -H "Authorization: Bearer $HF_TOKEN" \
-        -H "Content-Type: application/json")
-
-    # Check if the token is valid
-    if [ "$response" -eq 200 ]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-function provisioning_has_valid_civitai_token() {
-    [[ -n "$CIVITAI_TOKEN" ]] || return 1
-    url="https://civitai.com/api/v1/models?hidden=1&limit=1"
-
-    response=$(curl -o /dev/null -s -w "%{http_code}" -X GET "$url" \
-        -H "Authorization: Bearer $HF_TOKEN" \
-        -H "Content-Type: application/json")
-
-    # Check if the token is valid
-    if [ "$response" -eq 200 ]; then
-        return 0
-    else
-        return 1
-    fi
-}
 
 # Download from $1 URL to $2 file path
 function provisioning_download() {
