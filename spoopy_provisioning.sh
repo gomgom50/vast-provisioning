@@ -188,10 +188,12 @@ function provisioning_download() {
     fi
     if [[ -n $auth_token ]];then
         echo "Using token for: $1"
-        wget --header="Authorization: Bearer $auth_token" -nc --content-disposition --show-progress -e dotbytes="${3:-4M}" -P "$2" "$1"
+        output_file="$(basename "$1" | cut -d'?' -f1)"
+        wget --header="Authorization: Bearer $auth_token" -nc --content-disposition --show-progress -e dotbytes="${3:-4M}" -P "$2" "$1" -O "${2}/${output_file}.safetensors"
     else
         echo "Downloading without token: $1"
-        wget -nc --content-disposition --show-progress -e dotbytes="${3:-4M}" -P "$2" "$1"
+        output_file="$(basename "$1" | cut -d'?' -f1)"
+        wget -nc --content-disposition --show-progress -e dotbytes="${3:-4M}" -P "$2" "$1" -O "${2}/${output_file}.safetensors"
     fi
 }
 
