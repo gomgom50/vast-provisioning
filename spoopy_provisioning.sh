@@ -72,10 +72,10 @@ function provisioning_start() {
     provisioning_get_pip_packages
     provisioning_get_extensions
     provisioning_get_models \
-        "${WORKSPACE}/stable-diffusion-webui/models/Stable-diffusion" \
+        "${WORKSPACE}/storage/stable_diffusion/models/ckpt" \
         "${CHECKPOINT_MODELS[@]}"
     provisioning_get_models \
-        "${WORKSPACE}/stable-diffusion-webui/models/lora" \
+        "${WORKSPACE}/storage/stable_diffusion/models/lora" \
         "${LORA_MODELS[@]}"
     provisioning_get_models \
         "${WORKSPACE}/storage/stable_diffusion/models/controlnet" \
@@ -188,7 +188,7 @@ function provisioning_download() {
     fi
     if [[ -n $auth_token ]];then
         echo "Using token for: $1"
-        ooutput_file="${2}/$(basename "$1" | cut -d'?' -f1 | cut -c1-50).safetensors"
+        output_file="${2}/$(basename "$1" | cut -d'?' -f1 | cut -c1-50).safetensors"
         curl -L -H "Authorization: Bearer $auth_token" -o "$output_file" "$1"
     else
         echo "Downloading without token: $1"
