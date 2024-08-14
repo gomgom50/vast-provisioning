@@ -72,10 +72,10 @@ function provisioning_start() {
     provisioning_get_pip_packages
     provisioning_get_extensions
     provisioning_get_models \
-        "${WORKSPACE}/storage/stable_diffusion/models/Stable-diffusion" \
+        "${WORKSPACE}/stable-diffusion-webui/models/Stable-diffusion" \
         "${CHECKPOINT_MODELS[@]}"
     provisioning_get_models \
-        "${WORKSPACE}/storage/stable_diffusion/models/lora" \
+        "${WORKSPACE}/stable-diffusion-webui/models/lora" \
         "${LORA_MODELS[@]}"
     provisioning_get_models \
         "${WORKSPACE}/storage/stable_diffusion/models/controlnet" \
@@ -188,10 +188,10 @@ function provisioning_download() {
     fi
     if [[ -n $auth_token ]];then
         echo "Using token for: $1"
-        wget --header="Authorization: Bearer $auth_token" -qnc --content-disposition --show-progress -e dotbytes="${3:-4M}" -P "$2" "$1"
+        wget --header="Authorization: Bearer $auth_token" -nc --content-disposition --show-progress -e dotbytes="${3:-4M}" -P "$2" "$1"
     else
         echo "Downloading without token: $1"
-        wget -qnc --content-disposition --show-progress -e dotbytes="${3:-4M}" -P "$2" "$1"
+        wget -nc --content-disposition --show-progress -e dotbytes="${3:-4M}" -P "$2" "$1"
     fi
 }
 
