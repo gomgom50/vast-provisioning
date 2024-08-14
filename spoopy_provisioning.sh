@@ -7,7 +7,7 @@
 ### Edit the following arrays to suit your workflow - values must be quoted and separated by newlines or spaces.
 ### If you specify gated models you'll need to set environment variables HF_TOKEN and/orf CIVITAI_TOKEN
 
-DISK_GB_REQUIRED=30
+DISK_GB_REQUIRED=50
 
 APT_PACKAGES=(
     #"package-1"
