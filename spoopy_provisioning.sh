@@ -173,17 +173,17 @@ function provisioning_has_valid_civitai_token() {
     fi
 }
 
-# Download from $1 URL to $2 file path
 function provisioning_download() {
     local url="$1" dir="$2" auth=""
-    [[ -n $HF_TOKEN     && $url =~ huggingface\.co ]] && auth=$HF_TOKEN
+    [[ -n $HF_TOKEN      && $url =~ huggingface\.co ]] && auth=$HF_TOKEN
     [[ -n $CIVITAI_TOKEN && $url =~ civitai\.com     ]] && auth=$CIVITAI_TOKEN
 
-    printf "Using %s\n" "${auth:+token auth}${auth:+' for '}$url"
+    echo "→ $url  (${auth:+with token})"
 
-    wget --header="Authorization: Bearer $auth_token" \
-        -qnc --content-disposition \
-        --show-progress -e dotbytes="${3:-4M}" -P "$2" "$1"
+    # ----------- the only line that really had to change ----------- #
+    wget --header="Authorization: Bearer $auth" \                 # ← use $auth
+         -qnc --content-disposition --show-progress \
+         -e dotbytes="${3:-4M}" -P "$dir" "$url"
 }
 
 # Allow user to disable provisioning if they started with a script they didn't want
