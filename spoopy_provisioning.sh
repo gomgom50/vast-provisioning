@@ -181,9 +181,8 @@ function provisioning_download() {
     echo "→ $url  (${auth:+with token})"
 
     # ----------- the only line that really had to change ----------- #
-    wget --header="Authorization: Bearer $auth" \                 # ← use $auth
-         -qnc --content-disposition --show-progress \
-         -e dotbytes="${3:-4M}" -P "$dir" "$url"
+    wget --header="Authorization: Bearer $auth" -qnc --content-disposition \
+     --show-progress -e dotbytes="${3:-4M}" -P "$dir" "$url"
 }
 
 # Allow user to disable provisioning if they started with a script they didn't want
