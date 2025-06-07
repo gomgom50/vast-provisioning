@@ -181,9 +181,9 @@ function provisioning_download() {
 
     printf "Using %s\n" "${auth:+token auth}${auth:+' for '}$url"
 
-    wget -q --show-progress --remote-name --remote-header-name \
-         ${auth:+--header="Authorization: Bearer $auth"} \
-         -P "$dir" "$url"
+    wget --header="Authorization: Bearer $auth_token" \
+        -qnc --content-disposition \
+        --show-progress -e dotbytes="${3:-4M}" -P "$2" "$1"
 }
 
 # Allow user to disable provisioning if they started with a script they didn't want
