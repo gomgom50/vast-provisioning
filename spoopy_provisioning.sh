@@ -41,6 +41,11 @@ ESRGAN_MODELS=(
 CONTROLNET_MODELS=(
 )
 
+TEXTUAL_INVERSION_MODELS=(
+    "https://civitai.com/api/download/models/123456"   # replace with your link
+)
+
+
 ### DO NOT EDIT BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING ###
 
 function provisioning_start() {
@@ -48,9 +53,29 @@ function provisioning_start() {
     provisioning_get_apt_packages
     provisioning_get_extensions
     provisioning_get_pip_packages
+    # --- Checkpoints -----------------------------------------------------------
     provisioning_get_files \
         "${FORGE_DIR}/models/Stable-diffusion" \
         "${CHECKPOINT_MODELS[@]}"
+
+    provisioning_get_files \
+        "${FORGE_DIR}/embeddings" \
+        "${TEXTUAL_INVERSION_MODELS[@]}"
+    
+    # --- LoRAs -----------------------------------------------------------------
+    provisioning_get_files \
+        "${FORGE_DIR}/models/Lora" \
+        "${LORA_MODELS[@]}"
+    
+    # --- VAEs ------------------------------------------------------------------
+    provisioning_get_files \
+        "${FORGE_DIR}/models/VAE" \
+        "${VAE_MODELS[@]}"
+    
+    # --- ControlNet ------------------------------------------------------------
+    provisioning_get_files \
+        "${FORGE_DIR}/models/ControlNet" \
+        "${CONTROLNET_MODELS[@]}"
 
     # Avoid git errors because we run as root but files are owned by 'user'
     export GIT_CONFIG_GLOBAL=/tmp/temporary-git-config
@@ -150,17 +175,15 @@ function provisioning_has_valid_civitai_token() {
 
 # Download from $1 URL to $2 file path
 function provisioning_download() {
-    if [[ -n $HF_TOKEN && $1 =~ ^https://([a-zA-Z0-9_-]+\.)?huggingface\.co(/|$|\?) ]]; then
-        auth_token="$HF_TOKEN"
-    elif 
-        [[ -n $CIVITAI_TOKEN && $1 =~ ^https://([a-zA-Z0-9_-]+\.)?civitai\.com(/|$|\?) ]]; then
-        auth_token="$CIVITAI_TOKEN"
-    fi
-    if [[ -n $auth_token ]];then
-        wget --header="Authorization: Bearer $auth_token" -qnc --content-disposition --show-progress -e dotbytes="${3:-4M}" -P "$2" "$1"
-    else
-        wget -qnc --content-disposition --show-progress -e dotbytes="${3:-4M}" -P "$2" "$1"
-    fi
+    local url="$1" dir="$2" auth=""
+    [[ -n $HF_TOKEN     && $url =~ huggingface\.co ]] && auth=$HF_TOKEN
+    [[ -n $CIVITAI_TOKEN && $url =~ civitai\.com     ]] && auth=$CIVITAI_TOKEN
+
+    printf "Using %s\n" "${auth:+token auth}${auth:+' for '}$url"
+
+    wget -q --show-progress --remote-name --remote-header-name \
+         ${auth:+--header="Authorization: Bearer $auth"} \
+         -P "$dir" "$url"
 }
 
 # Allow user to disable provisioning if they started with a script they didn't want
