@@ -179,11 +179,20 @@ function provisioning_download() {
     [[ -n $CIVITAI_TOKEN && $url =~ civitai\.com     ]] && auth=$CIVITAI_TOKEN
 
     echo "→ $url  (${auth:+with token})"
-
-    # ----------- the only line that really had to change ----------- #
+    
+    # download to a temp name first
+    tmp="$dir/$(basename "${url%%\?*}")"
     curl -L -H "Authorization: Bearer $auth" \
-     --retry 5 --retry-delay 2 --fail \
-     -C - -o "$dir/$(basename "${url%%\?*}")" "$url"
+         --retry 5 --retry-delay 2 --fail \
+         -C - -o "$tmp" "$url"
+
+    # if the file has no recognised extension, assume safetensors
+    if [[ ! "$tmp" =~ \.(safetensors|ckpt)$ ]]; then
+        mv "$tmp" "${tmp}.safetensors"
+        tmp="${tmp}.safetensors"
+    fi
+
+    echo "   → saved as $(basename "$tmp")"
 }
 
 # Allow user to disable provisioning if they started with a script they didn't want
