@@ -42,7 +42,7 @@ CONTROLNET_MODELS=(
 )
 
 TEXTUAL_INVERSION_MODELS=(
-    "https://civitai.com/api/download/models/123456"   # replace with your link
+    "https://civitai.com/api/download/models/1591915"   # replace with your link
 )
 
 
