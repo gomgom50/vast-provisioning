@@ -21,6 +21,7 @@ PIP_PACKAGES=(
 
 CHECKPOINT_MODELS=(
     "https://civitai.com/api/download/models/1500882"
+    "https://civitai.com/api/download/models/1854228"
 )
 
 UNET_MODELS=(
