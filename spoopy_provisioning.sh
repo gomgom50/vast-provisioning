@@ -12,7 +12,6 @@ APT_PACKAGES=(
 
 EXTENSIONS=(
     "https://github.com/Bing-su/adetailer"
-    "https://github.com/BlafKing/sd-civitai-browser-plus" 
 )
 
 PIP_PACKAGES=(
