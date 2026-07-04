@@ -1,13 +1,17 @@
 #!/bin/bash
+set -euo pipefail
 
 source /venv/main/bin/activate
-FORGE_DIR=${WORKSPACE}/stable-diffusion-webui-forge
 
-# Packages are installed after nodes so we can fix them...
+WORKSPACE="${WORKSPACE:-/workspace}"
+FORGE_DIR="${FORGE_DIR:-${WORKSPACE}/stable-diffusion-webui-forge}"
+
+# Assumes your Vast image is already Forge Neo, e.g.
+# vastai/sd-forge:neo-a90af56-2026-03-23-cuda-12.9
 
 APT_PACKAGES=(
-    #"package-1"
-    #"package-2"
+    # "package-1"
+    # "package-2"
 )
 
 EXTENSIONS=(
@@ -15,22 +19,32 @@ EXTENSIONS=(
 )
 
 PIP_PACKAGES=(
-
 )
 
+# Format:
+# "URL|target_filename"
+#
+# The part after | is optional, but recommended for Civitai/HF URLs with query strings.
+
 CHECKPOINT_MODELS=(
-    "https://civitai.com/api/download/models/2741698?type=Model&format=SafeTensor&size=pruned&fp=fp16"
+    # Anima main model / DiT
+    "https://civitai.red/api/download/models/2945208?fileId=2824391|anima-base-v1.0.safetensors"
+)
+
+TEXT_ENCODER_MODELS=(
+    # Anima Qwen text encoder
+    "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/text_encoders/qwen_3_06b_base.safetensors?download=true|qwen_3_06b_base.safetensors"
+)
+
+VAE_MODELS=(
+    # Qwen VAE, renamed to the Anima/Forge-expected name
+    "https://huggingface.co/Anzhc/Qwen2D-VAE/resolve/main/Qwen2D_VAE.safetensors?download=true|qwen_image_vae.safetensors"
 )
 
 UNET_MODELS=(
 )
 
 LORA_MODELS=(
-    "https://civitai.com/api/download/models/2020736"
-    "https://civitai.com/api/download/models/1452630"
-)
-
-VAE_MODELS=(
 )
 
 ESRGAN_MODELS=(
@@ -40,157 +54,242 @@ CONTROLNET_MODELS=(
 )
 
 TEXTUAL_INVERSION_MODELS=(
-    "https://civitai.com/api/download/models/2121199"   # replace with your link
+    "https://civitai.com/api/download/models/2121199"
 )
-
 
 ### DO NOT EDIT BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING ###
 
 function provisioning_start() {
     provisioning_print_header
+
     provisioning_get_apt_packages
     provisioning_get_extensions
     provisioning_get_pip_packages
-    # --- Checkpoints -----------------------------------------------------------
+
+    # --- Checkpoints / DiT -----------------------------------------------------
     provisioning_get_files \
         "${FORGE_DIR}/models/Stable-diffusion" \
         "${CHECKPOINT_MODELS[@]}"
 
+    # --- Extra UNet models, if any ---------------------------------------------
+    provisioning_get_files \
+        "${FORGE_DIR}/models/Stable-diffusion" \
+        "${UNET_MODELS[@]}"
+
+    # --- Text Encoders ---------------------------------------------------------
+    provisioning_get_files \
+        "${FORGE_DIR}/models/text_encoder" \
+        "${TEXT_ENCODER_MODELS[@]}"
+
+    # --- Textual Inversions / Embeddings ---------------------------------------
     provisioning_get_files \
         "${FORGE_DIR}/embeddings" \
         "${TEXTUAL_INVERSION_MODELS[@]}"
-    
+
     # --- LoRAs -----------------------------------------------------------------
     provisioning_get_files \
         "${FORGE_DIR}/models/Lora" \
         "${LORA_MODELS[@]}"
-    
+
     # --- VAEs ------------------------------------------------------------------
     provisioning_get_files \
         "${FORGE_DIR}/models/VAE" \
         "${VAE_MODELS[@]}"
-    
+
+    # --- ESRGAN / Upscalers ----------------------------------------------------
+    provisioning_get_files \
+        "${FORGE_DIR}/models/ESRGAN" \
+        "${ESRGAN_MODELS[@]}"
+
     # --- ControlNet ------------------------------------------------------------
     provisioning_get_files \
         "${FORGE_DIR}/models/ControlNet" \
         "${CONTROLNET_MODELS[@]}"
 
-    # Avoid git errors because we run as root but files are owned by 'user'
+    provisioning_print_model_summary
+
+    # Avoid git errors because provisioning may run as root while files are owned by user
     export GIT_CONFIG_GLOBAL=/tmp/temporary-git-config
-    git config --file $GIT_CONFIG_GLOBAL --add safe.directory '*'
-    
-    # Start and exit because webui will probably require a restart
+    git config --file "$GIT_CONFIG_GLOBAL" --add safe.directory '*'
+
+    # Start and exit once so Forge can finish installing/preparing requirements.
+    # Do NOT use --no-half for Anima unless you specifically need it.
     cd "${FORGE_DIR}"
-    LD_PRELOAD=libtcmalloc_minimal.so.4 \
-        python launch.py \
-            --skip-python-version-check \
-            --no-download-sd-model \
-            --do-not-download-clip \
-            --no-half \
-            --port 11404 \
-            --exit
+
+    LAUNCH_CMD=(
+        python launch.py
+        --skip-python-version-check
+        --no-download-sd-model
+        --do-not-download-clip
+        --port 11404
+        --exit
+    )
+
+    if ldconfig -p 2>/dev/null | grep -q "libtcmalloc_minimal.so.4"; then
+        LD_PRELOAD=libtcmalloc_minimal.so.4 "${LAUNCH_CMD[@]}"
+    else
+        "${LAUNCH_CMD[@]}"
+    fi
 
     provisioning_print_end
 }
 
 function provisioning_get_apt_packages() {
-    if [[ -n $APT_PACKAGES ]]; then
-            sudo $APT_INSTALL ${APT_PACKAGES[@]}
+    if (( ${#APT_PACKAGES[@]} == 0 )); then
+        return 0
+    fi
+
+    if command -v sudo >/dev/null 2>&1; then
+        sudo apt-get update
+        sudo apt-get install -y "${APT_PACKAGES[@]}"
+    else
+        apt-get update
+        apt-get install -y "${APT_PACKAGES[@]}"
     fi
 }
 
 function provisioning_get_pip_packages() {
-    if [[ -n $PIP_PACKAGES ]]; then
-            pip install --no-cache-dir ${PIP_PACKAGES[@]}
+    if (( ${#PIP_PACKAGES[@]} == 0 )); then
+        return 0
     fi
+
+    pip install --no-cache-dir "${PIP_PACKAGES[@]}"
 }
 
 function provisioning_get_extensions() {
+    mkdir -p "${FORGE_DIR}/extensions"
+
     for repo in "${EXTENSIONS[@]}"; do
         dir="${repo##*/}"
+        dir="${dir%.git}"
         path="${FORGE_DIR}/extensions/${dir}"
-        if [[ ! -d $path ]]; then
+
+        if [[ ! -d "$path" ]]; then
             printf "Downloading extension: %s...\n" "${repo}"
             git clone "${repo}" "${path}" --recursive
+        else
+            printf "Extension already exists: %s\n" "${dir}"
         fi
     done
 }
 
 function provisioning_get_files() {
-    if [[ -z $2 ]]; then return 1; fi
-    
-    dir="$1"
-    mkdir -p "$dir"
+    if (( $# < 2 )); then
+        return 0
+    fi
+
+    local dir="$1"
     shift
-    arr=("$@")
-    printf "Downloading %s model(s) to %s...\n" "${#arr[@]}" "$dir"
-    for url in "${arr[@]}"; do
-        printf "Downloading: %s\n" "${url}"
-        provisioning_download "${url}" "${dir}"
+    local arr=("$@")
+
+    if (( ${#arr[@]} == 0 )); then
+        return 0
+    fi
+
+    mkdir -p "$dir"
+
+    printf "\nDownloading %s file(s) to %s...\n" "${#arr[@]}" "$dir"
+
+    for entry in "${arr[@]}"; do
+        provisioning_download "${entry}" "${dir}"
         printf "\n"
     done
 }
 
+function provisioning_download() {
+    local entry="$1"
+    local dir="$2"
+
+    local url=""
+    local filename=""
+
+    if [[ "$entry" == *"|"* ]]; then
+        url="${entry%%|*}"
+        filename="${entry#*|}"
+    else
+        url="$entry"
+        filename="$(basename "${url%%\?*}")"
+    fi
+
+    if [[ -z "$filename" || "$filename" == "/" || "$filename" == "." ]]; then
+        filename="downloaded_model.safetensors"
+    fi
+
+    if [[ ! "$filename" =~ \.(safetensors|ckpt|pt|pth|bin)$ ]]; then
+        filename="${filename}.safetensors"
+    fi
+
+    local output="${dir}/${filename}"
+    local partial="${output}.part"
+
+    if [[ -s "$output" ]]; then
+        echo "✓ Already exists: ${output}"
+        ls -lh "$output"
+        return 0
+    fi
+
+    local headers=()
+
+    # Only send HF token to huggingface.co
+    if [[ -n "${HF_TOKEN:-}" && "$url" =~ ^https://huggingface\.co/ ]]; then
+        headers=(-H "Authorization: Bearer ${HF_TOKEN}")
+    fi
+
+    # Only send Civitai token to official civitai.com.
+    # Do not send your token to civitai.red or other mirror/proxy domains.
+    if [[ -n "${CIVITAI_TOKEN:-}" && "$url" =~ ^https://civitai\.com/ ]]; then
+        headers=(-H "Authorization: Bearer ${CIVITAI_TOKEN}")
+    fi
+
+    echo "→ ${url}"
+    echo "  saving as: ${filename}"
+
+    curl -L "${headers[@]}" \
+        --retry 5 \
+        --retry-delay 2 \
+        --fail \
+        -C - \
+        -o "$partial" \
+        "$url"
+
+    mv -f "$partial" "$output"
+
+    echo "✓ Saved:"
+    ls -lh "$output"
+}
+
 function provisioning_print_header() {
-    printf "\n##############################################\n#                                            #\n#          Provisioning container            #\n#                                            #\n#         This will take some time           #\n#                                            #\n# Your container will be ready on completion #\n#                                            #\n##############################################\n\n"
+    printf "\n##############################################\n"
+    printf "#                                            #\n"
+    printf "#          Provisioning container            #\n"
+    printf "#                                            #\n"
+    printf "#         This will take some time           #\n"
+    printf "#                                            #\n"
+    printf "# Your container will be ready on completion #\n"
+    printf "#                                            #\n"
+    printf "##############################################\n\n"
 }
 
 function provisioning_print_end() {
-    printf "\nProvisioning complete:  Application will start now\n\n"
+    printf "\nProvisioning complete: Application will start now\n\n"
 }
 
-function provisioning_has_valid_hf_token() {
-    [[ -n "$HF_TOKEN" ]] || return 1
-    url="https://huggingface.co/api/whoami-v2"
+function provisioning_print_model_summary() {
+    printf "\nDownloaded model summary:\n\n"
 
-    response=$(curl -o /dev/null -s -w "%{http_code}" -X GET "$url" \
-        -H "Authorization: Bearer $HF_TOKEN" \
-        -H "Content-Type: application/json")
-
-    # Check if the token is valid
-    if [ "$response" -eq 200 ]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-function provisioning_has_valid_civitai_token() {
-    [[ -n "$CIVITAI_TOKEN" ]] || return 1
-    url="https://civitai.com/api/v1/models?hidden=1&limit=1"
-
-    response=$(curl -o /dev/null -s -w "%{http_code}" -X GET "$url" \
-        -H "Authorization: Bearer $CIVITAI_TOKEN" \
-        -H "Content-Type: application/json")
-
-    # Check if the token is valid
-    if [ "$response" -eq 200 ]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-function provisioning_download() {
-    local url="$1" dir="$2" auth=""
-    [[ -n $HF_TOKEN      && $url =~ huggingface\.co ]] && auth=$HF_TOKEN
-    [[ -n $CIVITAI_TOKEN && $url =~ civitai\.com     ]] && auth=$CIVITAI_TOKEN
-
-    echo "→ $url  (${auth:+with token})"
-    
-    # download to a temp name first
-    tmp="$dir/$(basename "${url%%\?*}")"
-    curl -L -H "Authorization: Bearer $auth" \
-         --retry 5 --retry-delay 2 --fail \
-         -C - -o "$tmp" "$url"
-
-    # if the file has no recognised extension, assume safetensors
-    if [[ ! "$tmp" =~ \.(safetensors|ckpt)$ ]]; then
-        mv "$tmp" "${tmp}.safetensors"
-        tmp="${tmp}.safetensors"
-    fi
-
-    echo "   → saved as $(basename "$tmp")"
+    for dir in \
+        "${FORGE_DIR}/models/Stable-diffusion" \
+        "${FORGE_DIR}/models/text_encoder" \
+        "${FORGE_DIR}/models/VAE" \
+        "${FORGE_DIR}/models/Lora" \
+        "${FORGE_DIR}/embeddings"
+    do
+        if [[ -d "$dir" ]]; then
+            echo "---- $dir"
+            find "$dir" -maxdepth 1 -type f -printf "%f\t%k KB\n" | sort || true
+            echo
+        fi
+    done
 }
 
 # Allow user to disable provisioning if they started with a script they didn't want
