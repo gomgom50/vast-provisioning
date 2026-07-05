@@ -27,18 +27,18 @@ PIP_PACKAGES=(
 # The part after | is optional, but recommended for Civitai/HF URLs with query strings.
 
 CHECKPOINT_MODELS=(
-    # Anima main model / DiT
-    "https://civitai.red/api/download/models/2945208?fileId=2824391|anima-base-v1.0.safetensors"
+    # Main model
+    "https://civitai.red/api/download/models/3065644?fileId=2944325|anima-main.safetensors"
 )
 
 TEXT_ENCODER_MODELS=(
-    # Anima Qwen text encoder
-    "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/text_encoders/qwen_3_06b_base.safetensors?download=true|qwen_3_06b_base.safetensors"
+    # Qwen text encoder
+    "https://civitai.red/api/download/models/3049284?fileId=2928055|qwen_3_06b_base.safetensors"
 )
 
 VAE_MODELS=(
-    # Qwen VAE, renamed to the Anima/Forge-expected name
-    "https://huggingface.co/Anzhc/Qwen2D-VAE/resolve/main/Qwen2D_VAE.safetensors?download=true|qwen_image_vae.safetensors"
+    # Qwen / Anima VAE
+    "https://civitai.red/api/download/models/3049284?fileId=2928050|qwen_image_vae.safetensors"
 )
 
 UNET_MODELS=(
